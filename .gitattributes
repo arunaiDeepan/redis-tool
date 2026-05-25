@@ -1,0 +1,15 @@
+# Shell scripts and the redis-tool wrapper must keep LF endings even when the
+# repo is cloned from Windows - CRLF will break the shebang on Linux/macOS.
+*.sh        text eol=lf
+redis-tool  text eol=lf
+Makefile    text eol=lf
+
+# Ansible / YAML - same reasoning. CRLF in YAML works but tools yell.
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.j2        text eol=lf
+*.ini       text eol=lf
+*.cfg       text eol=lf
+
+# Go source - gofmt insists on LF anyway.
+*.go        text eol=lf

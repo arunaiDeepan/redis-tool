@@ -1,0 +1,90 @@
+---
+# Upgrades a SINGLE node in place. Driven from the Go state machine, which
+# decides ordering, failover, and health gates. This playbook is a "dumb verb":
+#   stop -> install new version -> start -> wait healthy.
+#
+# Required extra-vars:
+#   target_node       inventory hostname (e.g. redis-node-3)
+#   redis_version     desired version (e.g. 7.2.6)
+
+- name: Validate inputs
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - ansible.builtin.assert:
+        that:
+          - target_node is defined
+          - target_node in groups['redis_nodes']
+          - redis_version is defined
+        fail_msg: "Pass --extra-vars 'target_node=<host> redis_version=<X.Y.Z>'"
+
+- name: Upgrade {{ target_node }} to Redis {{ redis_version }}
+  hosts: "{{ target_node }}"
+  gather_facts: true
+  tasks:
+    - name: Capture pre-upgrade version
+      ansible.builtin.command: "{{ redis_install_prefix }}/bin/redis-cli -p {{ redis_port }} INFO server"
+      register: pre_info
+      changed_when: false
+      failed_when: false
+
+    - name: Stop Redis (SHUTDOWN NOSAVE preserves AOF on disk)
+      ansible.builtin.shell: |
+        if [ -f "{{ redis_pid_file }}" ] && kill -0 "$(cat {{ redis_pid_file }})" 2>/dev/null; then
+          {{ redis_install_prefix }}/bin/redis-cli -p {{ redis_port }} SHUTDOWN NOSAVE || true
+        fi
+      register: shutdown_out
+      changed_when: true
+
+    - name: Wait for port to free
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: "{{ redis_port }}"
+        state: stopped
+        timeout: 20
+
+    # Install the new version via the role. force_rebuild ensures we don't
+    # short-circuit when the binary on disk is the OLD version.
+    - name: Install target Redis version
+      ansible.builtin.include_role:
+        name: redis
+      vars:
+        redis_force_rebuild: true
+
+    - name: Start Redis with existing config
+      ansible.builtin.command: "{{ redis_install_prefix }}/bin/redis-server {{ redis_conf_file }}"
+      changed_when: true
+
+    - name: Wait for Redis to accept connections
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: "{{ redis_port }}"
+        timeout: 30
+
+    - name: Wait for cluster_state:ok from this node's POV
+      ansible.builtin.shell: "{{ redis_install_prefix }}/bin/redis-cli -p {{ redis_port }} CLUSTER INFO | grep -c cluster_state:ok"
+      register: cluster_ok
+      retries: 30
+      delay: 1
+      until: cluster_ok.stdout | int == 1
+      changed_when: false
+
+    - name: If this node is a replica, wait for master_link_status:up
+      ansible.builtin.shell: |
+        role=$({{ redis_install_prefix }}/bin/redis-cli -p {{ redis_port }} INFO replication | awk -F: '/^role:/{print $2}' | tr -d '\r')
+        if [ "$role" = "slave" ]; then
+          {{ redis_install_prefix }}/bin/redis-cli -p {{ redis_port }} INFO replication | grep -c '^master_link_status:up'
+        else
+          echo 1
+        fi
+      register: link_ok
+      retries: 30
+      delay: 1
+      until: link_ok.stdout | int == 1
+      changed_when: false
+
+    - name: Confirm version
+      ansible.builtin.shell: "{{ redis_install_prefix }}/bin/redis-cli -p {{ redis_port }} INFO server | awk -F: '/^redis_version:/{print $2}' | tr -d '\r'"
+      register: post_version
+      changed_when: false
+      failed_when: post_version.stdout != redis_version

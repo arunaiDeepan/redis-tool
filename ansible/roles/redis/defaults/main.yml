@@ -1,0 +1,9 @@
+---
+# The version is normally passed via --extra-vars from redis-tool; this default
+# is only a safety net for direct ansible-playbook runs during development
+redis_version: "7.0.15"
+
+# A handful of build tunables. `redis_make_jobs` defaults to the container's
+# nproc when unset
+redis_make_jobs: ""
+redis_force_rebuild: false

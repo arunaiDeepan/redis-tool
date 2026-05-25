@@ -1,0 +1,97 @@
+# 6-node lab cluster. 2 key design choices:
+
+#   1. Each node publishes :22 to a distinct host port (2211..2216). Ansible talks
+#      to the host's 127.0.0.1:<port> - NEVER to 10.10.0.1x. This works identically
+#      on Linux, Docker Desktop, Podman, and rootless setups.
+
+#   2. The 10.10.0.0/24 subnet is reserved for Redis itself (cluster bus,
+#      replication, cluster-announce-ip). Containers reach each other over that
+#      subnet; the host never has to.
+
+name: redis-tool
+
+x-redis-node: &redis-node
+  build:
+    context: .
+    dockerfile: Containerfile
+  image: redis-tool/node:latest
+  init: true
+  restart: unless-stopped
+  cap_add:
+    - NET_ADMIN
+  tmpfs:
+    - /run
+  healthcheck:
+    test: ["CMD-SHELL", "pgrep -x sshd >/dev/null"]
+    interval: 5s
+    timeout: 3s
+    retries: 5
+
+networks:
+  redis_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.10.0.0/24
+          gateway: 10.10.0.1
+
+services:
+  redis-node-1:
+    <<: *redis-node
+    container_name: redis-node-1
+    hostname: redis-node-1
+    networks:
+      redis_net:
+        ipv4_address: 10.10.0.11
+    ports:
+      - "127.0.0.1:2211:22"
+
+  redis-node-2:
+    <<: *redis-node
+    container_name: redis-node-2
+    hostname: redis-node-2
+    networks:
+      redis_net:
+        ipv4_address: 10.10.0.12
+    ports:
+      - "127.0.0.1:2212:22"
+
+  redis-node-3:
+    <<: *redis-node
+    container_name: redis-node-3
+    hostname: redis-node-3
+    networks:
+      redis_net:
+        ipv4_address: 10.10.0.13
+    ports:
+      - "127.0.0.1:2213:22"
+
+  redis-node-4:
+    <<: *redis-node
+    container_name: redis-node-4
+    hostname: redis-node-4
+    networks:
+      redis_net:
+        ipv4_address: 10.10.0.14
+    ports:
+      - "127.0.0.1:2214:22"
+
+  redis-node-5:
+    <<: *redis-node
+    container_name: redis-node-5
+    hostname: redis-node-5
+    networks:
+      redis_net:
+        ipv4_address: 10.10.0.15
+    ports:
+      - "127.0.0.1:2215:22"
+
+  redis-node-6:
+    <<: *redis-node
+    container_name: redis-node-6
+    hostname: redis-node-6
+    networks:
+      redis_net:
+        ipv4_address: 10.10.0.16
+    ports:
+      - "127.0.0.1:2216:22"

@@ -1,0 +1,27 @@
+---
+- name: Validate required variables
+  ansible.builtin.assert:
+    that:
+      - redis_version is defined
+      - redis_version is match("^[0-9]+\\.[0-9]+\\.[0-9]+$")
+    fail_msg: "redis_version must be set to an exact X.Y.Z version (got: {{ redis_version | default('<unset>') }})"
+
+- name: Ensure runtime directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - "{{ redis_dir }}"
+    - "{{ redis_conf_dir }}"
+    - "{{ redis_log_dir }}"
+    - "{{ redis_run_dir }}"
+    - "{{ redis_src_root }}"
+
+- name: Install / build Redis from source at the exact pinned version
+  ansible.builtin.import_tasks: install.yml
+
+- name: Render redis.conf
+  ansible.builtin.import_tasks: configure.yml

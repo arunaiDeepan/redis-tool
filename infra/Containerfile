@@ -1,0 +1,41 @@
+# Base image for simulated Redis nodes.
+# We install only what's needed to (a) accept SSH from the Ansible control node
+# and (b) build Redis from source at the version Ansible specifies.
+# Redis itself is NOT installed here - that's the playbook's job.
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    LANG=C.UTF-8
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        openssh-server \
+        sudo \
+        ca-certificates \
+        curl \
+        build-essential \
+        pkg-config \
+        python3 \
+        python3-apt \
+        iproute2 \
+        iputils-ping \
+        procps \
+        tzdata \
+    && rm -rf /var/lib/apt/lists/*
+
+# sshd runtime dir + lock down config for key-only auth
+RUN mkdir -p /run/sshd /root/.ssh \
+    && chmod 700 /root/.ssh \
+    && sed -ri 's/^#?PermitRootLogin.*/PermitRootLogin prohibit-password/' /etc/ssh/sshd_config \
+    && sed -ri 's/^#?PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config \
+    && sed -ri 's/^#?PubkeyAuthentication.*/PubkeyAuthentication yes/' /etc/ssh/sshd_config \
+    && sed -ri 's/^#?UseDNS.*/UseDNS no/' /etc/ssh/sshd_config
+
+# Authorized key is injected at build time from infra/keys/redis_tool_id_ed25519.pub
+COPY keys/redis_tool_id_ed25519.pub /root/.ssh/authorized_keys
+RUN chmod 600 /root/.ssh/authorized_keys
+
+# Working dirs for Redis (created here so the playbook can drop files in directly)
+RUN mkdir -p /etc/redis /var/lib/redis /var/log/redis /var/run/redis
+
+EXPOSE 22 6379 16379
+CMD ["/usr/sbin/sshd", "-D", "-e"]

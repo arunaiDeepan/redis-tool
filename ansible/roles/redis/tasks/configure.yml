@@ -1,0 +1,12 @@
+---
+- name: Render redis.conf
+  ansible.builtin.template:
+    src: redis.conf.j2
+    dest: "{{ redis_conf_file }}"
+    owner: root
+    group: root
+    mode: "0644"
+    
+  # We deliberately do NOT notify a restart handler here. Restarting Redis is
+  # the upgrade pipeline's job (stop -> install -> start with health gates),
+  # not a side effect of a config render.

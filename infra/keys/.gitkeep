@@ -1,0 +1,4 @@
+# SSH keypair is generated at infra-up time by `redis-tool infra up`
+# (or scripts/generate-keys.sh). The .pub file lands here and is COPYed into
+# the container image. The private half goes to ~/.ssh/redis_tool_id_ed25519
+# on the host (or wherever ssh_key_path in redis-tool.yaml points).

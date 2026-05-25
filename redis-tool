@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Thin wrapper so reviewers can call `./redis-tool ...` from the submission
+# root without needing to know about the Go build.
+#
+# Behavior:
+#   - If bin/redis-tool is missing, build it.
+#   - If REDIS_TOOL_REBUILD=1 is set, force a rebuild.
+#   - Otherwise just exec the cached binary.
+#
+# (No mtime comparison: BSD `find` on macOS doesn't support -printf, and
+# we'd rather under-rebuild than have a portability footgun. Run
+# `REDIS_TOOL_REBUILD=1 ./redis-tool ...` or `make build` after editing code.)
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BIN="${REPO_ROOT}/bin/redis-tool"
+
+if [[ "${REDIS_TOOL_REBUILD:-0}" == "1" || ! -x "${BIN}" ]]; then
+  if ! command -v go >/dev/null 2>&1; then
+    echo "redis-tool: 'go' is required to build the CLI. Install Go 1.22+ from https://go.dev/dl/" >&2
+    exit 127
+  fi
+  mkdir -p "${REPO_ROOT}/bin"
+  (cd "${REPO_ROOT}" && go build -o "${BIN}" .)
+fi
+
+exec "${BIN}" "$@"

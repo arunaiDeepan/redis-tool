@@ -1,0 +1,8 @@
+---
+# We intentionally don't ship a restart handler. Lifecycle (start/stop/restart)
+# is driven by the Go state machine via explicit playbooks (provision.yml,
+# upgrade_node.yml), so a config change never causes a surprise restart
+
+- name: assert installed version
+  ansible.builtin.debug:
+    msg: "Redis {{ redis_version }} installed on {{ inventory_hostname }}"

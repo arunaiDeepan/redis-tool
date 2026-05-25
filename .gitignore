@@ -1,0 +1,20 @@
+bin/
+.run/
+.ansible-facts/
+*.retry
+
+# Generated SSH keypair public half is committed (so the image is reproducible);
+# private half should NEVER be. The default location is ~/.ssh, but allow for
+# devs who symlink into the repo
+infra/keys/redis_tool_id_ed25519
+infra/keys/*_id_*
+
+# Logs are runtime artifacts
+logs/*.jsonl
+
+# Editor / OS noise
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db

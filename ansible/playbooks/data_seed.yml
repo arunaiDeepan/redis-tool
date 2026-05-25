@@ -1,0 +1,73 @@
+---
+# Deterministic seed: value("key:NNNN") == sha256_hex("key:NNNN").
+# Verify recomputes independently, so the scheme is self-checking.
+#
+# We run redis-cli -c (cluster-aware) on the seed node so MOVED redirects are
+# followed and keys spread naturally across masters.
+
+- name: Seed {{ keys_count | default(1000) }} deterministic keys
+  hosts: seed
+  gather_facts: false
+  vars:
+    keys_count: 1000
+    seed_script_dest: /tmp/redis_seed.sh
+    seed_result_path: /tmp/redis_seed_result.json
+  tasks:
+    - name: Push seed shell script
+      ansible.builtin.copy:
+        dest: "{{ seed_script_dest }}"
+        mode: "0755"
+        content: |
+          #!/usr/bin/env bash
+          set -euo pipefail
+          COUNT="${1:-1000}"
+          HOST="127.0.0.1"
+          PORT="{{ redis_port }}"
+          OK=0
+          FAIL=0
+          for i in $(seq 1 "$COUNT"); do
+            key=$(printf "key:%04d" "$i")
+            val=$(printf "%s" "$key" | sha256sum | awk '{print $1}')
+            if {{ redis_install_prefix }}/bin/redis-cli -c -h "$HOST" -p "$PORT" SET "$key" "$val" >/dev/null; then
+              OK=$((OK+1))
+            else
+              FAIL=$((FAIL+1))
+            fi
+          done
+          printf '{"inserted":%d,"failed":%d,"total":%d}\n' "$OK" "$FAIL" "$COUNT" > "{{ seed_result_path }}"
+
+    - name: Execute seed
+      ansible.builtin.command: "{{ seed_script_dest }} {{ keys_count }}"
+      register: seed_run
+      changed_when: true
+
+    - name: Read seed result
+      ansible.builtin.slurp:
+        src: "{{ seed_result_path }}"
+      register: seed_result_b64
+
+    - name: Per-master DBSIZE (for distribution summary)
+      ansible.builtin.command: "{{ redis_install_prefix }}/bin/redis-cli -p {{ redis_port }} --cluster call 127.0.0.1:{{ redis_port }} DBSIZE"
+      register: dbsize_per_node
+      changed_when: false
+
+    - name: Ensure control-node output dir exists
+      ansible.builtin.file:
+        path: "{{ status_output_dir }}"
+        state: directory
+        mode: "0755"
+      delegate_to: localhost
+      become: false
+
+    - name: Write seed report to control node
+      ansible.builtin.copy:
+        dest: "{{ status_output_dir }}/seed.json"
+        mode: "0644"
+        content: |
+          {{ {
+              'requested': keys_count | int,
+              'result': (seed_result_b64.content | b64decode | from_json),
+              'distribution_raw': dbsize_per_node.stdout
+          } | to_nice_json }}
+      delegate_to: localhost
+      become: false

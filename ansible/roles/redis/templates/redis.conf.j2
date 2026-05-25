@@ -1,0 +1,41 @@
+################################################################################
+# redis.conf - managed by Ansible. Do not edit by hand.
+# Rendered for {{ inventory_hostname }} ({{ node_ip }}) at Redis {{ redis_version }}.
+################################################################################
+
+bind {{ redis_bind }}
+port {{ redis_port }}
+protected-mode no
+daemonize yes
+
+pidfile {{ redis_pid_file }}
+logfile {{ redis_log_file }}
+dir     {{ redis_dir }}
+
+# --- Cluster ---------------------------------------------------------------
+cluster-enabled yes
+cluster-config-file {{ redis_cluster_config_file }}
+cluster-node-timeout {{ redis_cluster_node_timeout_ms }}
+
+# announce-ip is the address other cluster members will use to talk to us.
+# It MUST be the container-network IP (10.10.0.1X), not 127.0.0.1.
+cluster-announce-ip {{ node_ip }}
+cluster-announce-port {{ redis_port }}
+cluster-announce-bus-port {{ redis_cluster_bus_port }}
+
+# --- Persistence -----------------------------------------------------------
+# AOF is on so that even a hard kill preserves writes - critical for the
+# data-integrity story across a rolling upgrade.
+appendonly {{ redis_appendonly }}
+appendfsync everysec
+save 900 1
+save 300 10
+save 60 10000
+
+# --- Tunables (sane lab defaults) ------------------------------------------
+tcp-backlog 511
+timeout 0
+tcp-keepalive 300
+loglevel notice
+databases 16
+maxmemory-policy noeviction

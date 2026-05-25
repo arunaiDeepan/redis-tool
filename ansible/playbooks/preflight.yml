@@ -1,0 +1,16 @@
+---
+# Pure connectivity check. Runs first on every command so the Go side can fail
+# fast and clearly when a node is unreachable.
+
+- name: Preflight - verify SSH + python on every node
+  hosts: redis_nodes
+  gather_facts: false
+  tasks:
+    - name: Ping
+      ansible.builtin.ping:
+      register: ping_result
+      failed_when: ping_result is failed
+
+    - name: Confirm python3 is usable
+      ansible.builtin.command: python3 --version
+      changed_when: false

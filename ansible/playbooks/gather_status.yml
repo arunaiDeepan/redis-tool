@@ -1,0 +1,87 @@
+---
+# Collect everything the Go CLI needs to render `status` and run health gates.
+# All Redis queries happen INSIDE containers (no host->10.10.0.1x routing needed).
+# The seed node consolidates per-host facts and writes ONE status.json on the
+# control node, where Go reads it back.
+
+- name: Per-node Redis introspection
+  hosts: redis_nodes
+  gather_facts: false
+  tasks:
+    - name: INFO server
+      ansible.builtin.command: "{{ redis_install_prefix }}/bin/redis-cli -p {{ redis_port }} INFO server"
+      register: info_server
+      changed_when: false
+      failed_when: false
+
+    - name: INFO memory
+      ansible.builtin.command: "{{ redis_install_prefix }}/bin/redis-cli -p {{ redis_port }} INFO memory"
+      register: info_memory
+      changed_when: false
+      failed_when: false
+
+    - name: INFO replication
+      ansible.builtin.command: "{{ redis_install_prefix }}/bin/redis-cli -p {{ redis_port }} INFO replication"
+      register: info_replication
+      changed_when: false
+      failed_when: false
+
+    - name: DBSIZE
+      ansible.builtin.command: "{{ redis_install_prefix }}/bin/redis-cli -p {{ redis_port }} DBSIZE"
+      register: dbsize
+      changed_when: false
+      failed_when: false
+
+    - name: Build per-node fact
+      ansible.builtin.set_fact:
+        node_status:
+          name: "{{ inventory_hostname }}"
+          ip: "{{ node_ip }}"
+          port: "{{ redis_port }}"
+          reachable: "{{ info_server.rc == 0 }}"
+          version: "{{ (info_server.stdout | regex_search('redis_version:([0-9.]+)', '\\1') | first) | default('') }}"
+          # role/master/slots come from cluster-aware sources below; INFO replication
+          # tells us role and master link state.
+          info_replication_raw: "{{ info_replication.stdout }}"
+          memory_human: "{{ (info_memory.stdout | regex_search('used_memory_human:([^\\r\\n]+)', '\\1') | first) | default('') | trim }}"
+          dbsize: "{{ (dbsize.stdout | int) if dbsize.rc == 0 else -1 }}"
+
+- name: Cluster-wide state (delegated to seed)
+  hosts: seed
+  gather_facts: false
+  tasks:
+    - name: CLUSTER INFO
+      ansible.builtin.command: "{{ redis_install_prefix }}/bin/redis-cli -p {{ redis_port }} CLUSTER INFO"
+      register: cluster_info
+      changed_when: false
+
+    - name: CLUSTER NODES
+      ansible.builtin.command: "{{ redis_install_prefix }}/bin/redis-cli -p {{ redis_port }} CLUSTER NODES"
+      register: cluster_nodes
+      changed_when: false
+
+    - name: Ensure control-node output dir exists
+      ansible.builtin.file:
+        path: "{{ status_output_dir }}"
+        state: directory
+        mode: "0755"
+      delegate_to: localhost
+      become: false
+
+    - name: Write consolidated status.json to control node
+      ansible.builtin.copy:
+        dest: "{{ status_output_dir }}/status.json"
+        mode: "0644"
+        content: "{{ payload | to_nice_json }}"
+      delegate_to: localhost
+      become: false
+      vars:
+        payload:
+          generated_at: "{{ ansible_date_time.iso8601 | default(lookup('pipe','date -u +%FT%TZ')) }}"
+          cluster_state: "{{ 'ok' if 'cluster_state:ok' in cluster_info.stdout else 'fail' }}"
+          cluster_info_raw: "{{ cluster_info.stdout }}"
+          cluster_nodes_raw: "{{ cluster_nodes.stdout }}"
+          nodes: >-
+            {{ groups['redis_nodes']
+               | map('extract', hostvars, 'node_status')
+               | list }}

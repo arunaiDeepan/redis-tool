@@ -1,0 +1,78 @@
+---
+# Build Redis from source. We need exact patch versions (7.0.15, 7.2.6, etc.)
+# and Ubuntu's apt repos don't carry arbitrary point releases - source is the
+# only honest way to honor `--version X.Y.Z`.
+#
+# Idempotency: we check the installed binary's reported version first
+# If it already matches `redis_version`, we skip the whole download/build chain
+# `redis_force_rebuild=true` bypasses the check for development
+
+- name: Check currently installed redis-server version (if any)
+  ansible.builtin.command: "{{ redis_install_prefix }}/bin/redis-server --version"
+  register: installed_version_raw
+  changed_when: false
+  failed_when: false
+
+- name: Parse installed Redis version
+  ansible.builtin.set_fact:
+    installed_redis_version: >-
+      {{ (installed_version_raw.stdout | regex_search('v=([0-9]+\.[0-9]+\.[0-9]+)', '\1') | first)
+         if installed_version_raw.rc == 0 else '' }}
+
+- name: Decide whether we need to (re)build Redis
+  ansible.builtin.set_fact:
+    redis_needs_build: "{{ redis_force_rebuild or installed_redis_version != redis_version }}"
+
+- name: Report install plan
+  ansible.builtin.debug:
+    msg: >-
+      installed={{ installed_redis_version | default('<none>') }}
+      target={{ redis_version }}
+      build={{ redis_needs_build }}
+
+- name: Download Redis source tarball
+  when: redis_needs_build
+  ansible.builtin.get_url:
+    url: "{{ redis_download_base }}/redis-{{ redis_version }}.tar.gz"
+    dest: "{{ redis_src_root }}/redis-{{ redis_version }}.tar.gz"
+    mode: "0644"
+    timeout: 60
+  register: redis_download
+  retries: 3
+  delay: 5
+  until: redis_download is success
+
+- name: Extract Redis source
+  when: redis_needs_build
+  ansible.builtin.unarchive:
+    src: "{{ redis_src_root }}/redis-{{ redis_version }}.tar.gz"
+    dest: "{{ redis_src_root }}"
+    remote_src: true
+    creates: "{{ redis_src_root }}/redis-{{ redis_version }}/Makefile"
+
+- name: Build Redis ({{ redis_version }})
+  when: redis_needs_build
+  ansible.builtin.command:
+    chdir: "{{ redis_src_root }}/redis-{{ redis_version }}"
+    cmd: "make -j{{ redis_make_jobs | default(ansible_processor_vcpus | default(2), true) }} BUILD_TLS=no MALLOC=libc"
+    creates: "{{ redis_src_root }}/redis-{{ redis_version }}/src/redis-server"
+
+- name: Install Redis binaries to {{ redis_install_prefix }}
+  when: redis_needs_build
+  ansible.builtin.command:
+    chdir: "{{ redis_src_root }}/redis-{{ redis_version }}"
+    cmd: "make PREFIX={{ redis_install_prefix }} install"
+  notify: assert installed version
+
+- name: Re-read installed version after build
+  when: redis_needs_build
+  ansible.builtin.command: "{{ redis_install_prefix }}/bin/redis-server --version"
+  register: post_install_version
+  changed_when: false
+
+- name: Fail loudly if installed version doesn't match requested
+  when: redis_needs_build
+  ansible.builtin.assert:
+    that:
+      - (post_install_version.stdout | regex_search('v=([0-9]+\.[0-9]+\.[0-9]+)', '\1') | first) == redis_version
+    fail_msg: "Installed binary is not {{ redis_version }}; got: {{ post_install_version.stdout }}"

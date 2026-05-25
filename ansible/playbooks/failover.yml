@@ -1,0 +1,47 @@
+---
+# Issues CLUSTER FAILOVER on a specific replica, promoting it to master.
+# The Go state machine calls this BEFORE taking down the (now-demoted) old master.
+#
+# Required extra-vars:
+#   replica_node      inventory hostname of the replica that should take over
+
+- name: Validate inputs
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - ansible.builtin.assert:
+        that:
+          - replica_node is defined
+          - replica_node in groups['redis_nodes']
+
+- name: Trigger CLUSTER FAILOVER on {{ replica_node }}
+  hosts: "{{ replica_node }}"
+  gather_facts: false
+  tasks:
+    - name: Confirm node is currently a replica
+      ansible.builtin.shell: "{{ redis_install_prefix }}/bin/redis-cli -p {{ redis_port }} INFO replication | awk -F: '/^role:/{print $2}' | tr -d '\r'"
+      register: role_check
+      changed_when: false
+      failed_when: role_check.stdout != 'slave'
+
+    - name: Issue CLUSTER FAILOVER
+      ansible.builtin.command: "{{ redis_install_prefix }}/bin/redis-cli -p {{ redis_port }} CLUSTER FAILOVER"
+      register: failover_cmd
+      changed_when: true
+      failed_when: failover_cmd.stdout | trim != 'OK'
+
+    - name: Wait until this node is master
+      ansible.builtin.shell: "{{ redis_install_prefix }}/bin/redis-cli -p {{ redis_port }} INFO replication | awk -F: '/^role:/{print $2}' | tr -d '\r'"
+      register: role_after
+      retries: 30
+      delay: 1
+      until: role_after.stdout == 'master'
+      changed_when: false
+
+    - name: Wait for cluster_state:ok after role swap
+      ansible.builtin.shell: "{{ redis_install_prefix }}/bin/redis-cli -p {{ redis_port }} CLUSTER INFO | grep -c cluster_state:ok"
+      register: cluster_ok
+      retries: 30
+      delay: 1
+      until: cluster_ok.stdout | int == 1
+      changed_when: false

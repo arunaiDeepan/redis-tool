@@ -1,0 +1,26 @@
+---
+# Defaults shared by every playbook. Anything passed via `--extra-vars` from
+# redis-tool (e.g. redis_version) overrides these.
+
+redis_port: 6379
+redis_cluster_bus_port: 16379
+redis_bind: "0.0.0.0"
+redis_dir: /var/lib/redis
+redis_conf_dir: /etc/redis
+redis_log_dir: /var/log/redis
+redis_run_dir: /var/run/redis
+redis_conf_file: "{{ redis_conf_dir }}/redis.conf"
+redis_pid_file: "{{ redis_run_dir }}/redis.pid"
+redis_log_file: "{{ redis_log_dir }}/redis.log"
+redis_cluster_config_file: "{{ redis_dir }}/nodes.conf"
+redis_cluster_node_timeout_ms: 5000
+redis_appendonly: "yes"
+
+# Source-build settings. Pinned tarball URL keeps installs reproducible.
+redis_src_root: /opt/redis-src
+redis_install_prefix: /usr/local
+redis_download_base: "https://download.redis.io/releases"
+
+# Where playbooks drop machine-readable output that the Go CLI reads back.
+# /tmp on the control node, NOT on the managed nodes.
+status_output_dir: "{{ playbook_dir }}/../.run"

@@ -1,0 +1,76 @@
+---
+# Phase 1 - install + configure + start Redis on all nodes, then form the cluster.
+# Idempotent: re-running on a healthy cluster is a no-op.
+
+- name: Install & configure Redis on all nodes
+  hosts: redis_nodes
+  gather_facts: true
+  roles:
+    - role: redis
+
+- name: Ensure Redis is running on every node
+  hosts: redis_nodes
+  gather_facts: false
+  tasks:
+    - name: Check whether redis-server is already running
+      ansible.builtin.shell: |
+        set -e
+        if [ -f "{{ redis_pid_file }}" ] && kill -0 "$(cat {{ redis_pid_file }})" 2>/dev/null; then
+          echo running
+        else
+          echo stopped
+        fi
+      register: redis_state
+      changed_when: false
+
+    - name: Start Redis (daemonize) if not running
+      when: redis_state.stdout == 'stopped'
+      ansible.builtin.command: "{{ redis_install_prefix }}/bin/redis-server {{ redis_conf_file }}"
+      register: redis_start
+      changed_when: true
+
+    - name: Wait for Redis to accept connections on {{ redis_port }}
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: "{{ redis_port }}"
+        timeout: 30
+
+    - name: Confirm PING -> PONG
+      ansible.builtin.command: "{{ redis_install_prefix }}/bin/redis-cli -p {{ redis_port }} PING"
+      register: ping_out
+      changed_when: false
+      failed_when: ping_out.stdout != 'PONG'
+
+- name: Form the cluster (idempotent - skipped if already formed)
+  hosts: seed
+  gather_facts: false
+  vars:
+    cluster_node_ips: "{{ groups['redis_nodes'] | map('extract', hostvars, 'node_ip') | list }}"
+    cluster_create_args: >-
+      {{ cluster_node_ips | map('regex_replace', '^(.*)$', '\1:' ~ redis_port) | join(' ') }}
+  tasks:
+    - name: Inspect existing cluster state
+      ansible.builtin.command: "{{ redis_install_prefix }}/bin/redis-cli -p {{ redis_port }} CLUSTER INFO"
+      register: cluster_info
+      changed_when: false
+
+    - name: Decide whether cluster needs forming
+      ansible.builtin.set_fact:
+        cluster_needs_create: "{{ 'cluster_state:ok' not in cluster_info.stdout }}"
+
+    - name: Create the cluster (3 masters, 1 replica each)
+      when: cluster_needs_create
+      ansible.builtin.shell: |
+        {{ redis_install_prefix }}/bin/redis-cli --cluster create \
+          {{ cluster_create_args }} \
+          --cluster-replicas 1 \
+          --cluster-yes
+      register: cluster_create_out
+
+    - name: Wait for cluster_state:ok
+      ansible.builtin.shell: "{{ redis_install_prefix }}/bin/redis-cli -p {{ redis_port }} CLUSTER INFO | grep -c cluster_state:ok"
+      register: cluster_ok
+      retries: 20
+      delay: 1
+      until: cluster_ok.stdout | int == 1
+      changed_when: false

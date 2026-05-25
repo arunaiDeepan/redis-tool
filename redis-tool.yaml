@@ -1,0 +1,15 @@
+# Default config. Override anything here via flags or REDIS_TOOL_<KEY> env vars
+
+default_redis_version: "7.0.15"
+node_count: 6
+masters: 3
+replicas_per_master: 1
+
+ssh_key_path: "~/.ssh/redis_tool_id_ed25519"
+
+# Paths are resolved relative to the repo root (i.e. this file's directory)
+ansible_dir: "ansible"
+infra_dir: "infra"
+logs_dir: "logs"
+output_dir: "output"
+run_dir: ".run"
