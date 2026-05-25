@@ -22,5 +22,7 @@ redis_install_prefix: /usr/local
 redis_download_base: "https://download.redis.io/releases"
 
 # Where playbooks drop machine-readable output that the Go CLI reads back.
-# /tmp on the control node, NOT on the managed nodes.
-status_output_dir: "{{ playbook_dir }}/../.run"
+# On the control node, NOT the managed nodes. playbook_dir is
+# <repo>/ansible/playbooks, so ../../.run resolves to <repo>/.run -- exactly
+# the RunDir the Go CLI reads (internal/config default run_dir=".run").
+status_output_dir: "{{ playbook_dir }}/../../.run"

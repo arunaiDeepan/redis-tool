@@ -1,0 +1,154 @@
+✓ podman 4.9.3 found
+✓ podman compose available (4.9.3)
+✓ Ansible 2.16.3 found
+Proceeding...
+
+
+PLAY [Preflight - verify SSH + python on every node] ***************************
+
+TASK [Ping] ********************************************************************
+[0;32mok: [redis-node-5][0m
+[0;32mok: [redis-node-2][0m
+[0;32mok: [redis-node-4][0m
+[0;32mok: [redis-node-6][0m
+[0;32mok: [redis-node-1][0m
+[0;32mok: [redis-node-3][0m
+
+TASK [Confirm python3 is usable] ***********************************************
+[0;32mok: [redis-node-6][0m
+[0;32mok: [redis-node-2][0m
+[0;32mok: [redis-node-4][0m
+[0;32mok: [redis-node-5][0m
+[0;32mok: [redis-node-3][0m
+[0;32mok: [redis-node-1][0m
+
+PLAY RECAP *********************************************************************
+[0;32mredis-node-1[0m               : [0;32mok=2   [0m changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+[0;32mredis-node-2[0m               : [0;32mok=2   [0m changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+[0;32mredis-node-3[0m               : [0;32mok=2   [0m changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+[0;32mredis-node-4[0m               : [0;32mok=2   [0m changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+[0;32mredis-node-5[0m               : [0;32mok=2   [0m changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+[0;32mredis-node-6[0m               : [0;32mok=2   [0m changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+
+PLAY [Install & configure Redis on all nodes] **********************************
+
+TASK [redis : Validate required variables] *************************************
+[0;32mok: [redis-node-1] => {[0m
+[0;32m    "changed": false,[0m
+[0;32m    "msg": "All assertions passed"[0m
+[0;32m}[0m
+[0;32mok: [redis-node-2] => {[0m
+[0;32m    "changed": false,[0m
+[0;32m    "msg": "All assertions passed"[0m
+[0;32m}[0m
+[0;32mok: [redis-node-3] => {[0m
+[0;32m    "changed": false,[0m
+[0;32m    "msg": "All assertions passed"[0m
+[0;32m}[0m
+[0;32mok: [redis-node-4] => {[0m
+[0;32m    "changed": false,[0m
+[0;32m    "msg": "All assertions passed"[0m
+[0;32m}[0m
+[0;32mok: [redis-node-5] => {[0m
+[0;32m    "changed": false,[0m
+[0;32m    "msg": "All assertions passed"[0m
+[0;32m}[0m
+[0;32mok: [redis-node-6] => {[0m
+[0;32m    "changed": false,[0m
+[0;32m    "msg": "All assertions passed"[0m
+[0;32m}[0m
+
+TASK [redis : Ensure runtime directories exist] ********************************
+[0;32mok: [redis-node-3] => (item=/var/lib/redis)[0m
+[0;32mok: [redis-node-6] => (item=/var/lib/redis)[0m
+[0;32mok: [redis-node-4] => (item=/var/lib/redis)[0m
+[0;32mok: [redis-node-1] => (item=/var/lib/redis)[0m
+[0;32mok: [redis-node-5] => (item=/var/lib/redis)[0m
+[0;32mok: [redis-node-2] => (item=/var/lib/redis)[0m
+[0;32mok: [redis-node-3] => (item=/etc/redis)[0m
+[0;32mok: [redis-node-5] => (item=/etc/redis)[0m
+[0;32mok: [redis-node-1] => (item=/etc/redis)[0m
+[0;32mok: [redis-node-4] => (item=/etc/redis)[0m
+[0;32mok: [redis-node-6] => (item=/etc/redis)[0m
+[0;32mok: [redis-node-2] => (item=/etc/redis)[0m
+[0;32mok: [redis-node-3] => (item=/var/log/redis)[0m
+[0;32mok: [redis-node-6] => (item=/var/log/redis)[0m
+[0;32mok: [redis-node-4] => (item=/var/log/redis)[0m
+[0;32mok: [redis-node-1] => (item=/var/log/redis)[0m
+[0;32mok: [redis-node-5] => (item=/var/log/redis)[0m
+[0;32mok: [redis-node-2] => (item=/var/log/redis)[0m
+[0;32mok: [redis-node-4] => (item=/var/run/redis)[0m
+[0;32mok: [redis-node-6] => (item=/var/run/redis)[0m
+[0;32mok: [redis-node-3] => (item=/var/run/redis)[0m
+[0;32mok: [redis-node-1] => (item=/var/run/redis)[0m
+[0;32mok: [redis-node-5] => (item=/var/run/redis)[0m
+[0;32mok: [redis-node-2] => (item=/var/run/redis)[0m
+[0;33mchanged: [redis-node-4] => (item=/opt/redis-src)[0m
+[0;33mchanged: [redis-node-5] => (item=/opt/redis-src)[0m
+[0;33mchanged: [redis-node-6] => (item=/opt/redis-src)[0m
+[0;33mchanged: [redis-node-3] => (item=/opt/redis-src)[0m
+[0;33mchanged: [redis-node-1] => (item=/opt/redis-src)[0m
+[0;33mchanged: [redis-node-2] => (item=/opt/redis-src)[0m
+
+TASK [redis : Check currently installed redis-server version (if any)] *********
+[0;32mok: [redis-node-2][0m
+[0;32mok: [redis-node-5][0m
+[0;32mok: [redis-node-3][0m
+[0;32mok: [redis-node-1][0m
+[0;32mok: [redis-node-4][0m
+[0;32mok: [redis-node-6][0m
+
+TASK [redis : Parse installed Redis version] ***********************************
+[0;32mok: [redis-node-1][0m
+[0;32mok: [redis-node-2][0m
+[0;32mok: [redis-node-3][0m
+[0;32mok: [redis-node-4][0m
+[0;32mok: [redis-node-5][0m
+[0;32mok: [redis-node-6][0m
+
+TASK [redis : Decide whether we need to (re)build Redis] ***********************
+[0;32mok: [redis-node-1][0m
+[0;32mok: [redis-node-2][0m
+[0;32mok: [redis-node-3][0m
+[0;32mok: [redis-node-4][0m
+[0;32mok: [redis-node-5][0m
+[0;32mok: [redis-node-6][0m
+
+TASK [redis : Report install plan] *********************************************
+[0;32mok: [redis-node-1] => {[0m
+[0;32m    "msg": "installed= target=7.0.15 build=True"[0m
+[0;32m}[0m
+[0;32mok: [redis-node-2] => {[0m
+[0;32m    "msg": "installed= target=7.0.15 build=True"[0m
+[0;32m}[0m
+[0;32mok: [redis-node-3] => {[0m
+[0;32m    "msg": "installed= target=7.0.15 build=True"[0m
+[0;32m}[0m
+[0;32mok: [redis-node-4] => {[0m
+[0;32m    "msg": "installed= target=7.0.15 build=True"[0m
+[0;32m}[0m
+[0;32mok: [redis-node-5] => {[0m
+[0;32m    "msg": "installed= target=7.0.15 build=True"[0m
+[0;32m}[0m
+[0;32mok: [redis-node-6] => {[0m
+[0;32m    "msg": "installed= target=7.0.15 build=True"[0m
+[0;32m}[0m
+
+TASK [redis : Download Redis source tarball] ***********************************
+[0;33mchanged: [redis-node-2][0m
+[0;33mchanged: [redis-node-5][0m
+[0;33mchanged: [redis-node-1][0m
+[0;33mchanged: [redis-node-6][0m
+[0;33mchanged: [redis-node-4][0m
+[0;33mchanged: [redis-node-3][0m
+
+TASK [redis : Extract Redis source] ********************************************
+[0;33mchanged: [redis-node-1][0m
+[0;33mchanged: [redis-node-5][0m
+[0;33mchanged: [redis-node-6][0m
+[0;33mchanged: [redis-node-2][0m
+[0;33mchanged: [redis-node-3][0m
+[0;33mchanged: [redis-node-4][0m
+
+TASK [redis : Build Redis (7.0.15)] ********************************************

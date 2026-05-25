@@ -62,7 +62,15 @@ func (r *Runner) Run(ctx context.Context, playbook string, extraVars map[string]
 
 	cmd := exec.CommandContext(ctx, bin, args...)
 	cmd.Dir = r.AnsibleDir
-	cmd.Env = append(os.Environ(), "ANSIBLE_FORCE_COLOR=1")
+	// Pin ANSIBLE_CONFIG to an absolute path so Ansible loads our ansible.cfg
+	// even when AnsibleDir is world-writable (e.g. a /mnt/c WSL DrvFs mount,
+	// where chmod can't drop the 0777 bits). Without this, Ansible silently
+	// ignores the cfg, never reads inventory/roles_path, and every play
+	// "skips: no hosts matched".
+	cmd.Env = append(os.Environ(),
+		"ANSIBLE_FORCE_COLOR=1",
+		"ANSIBLE_CONFIG="+filepath.Join(r.AnsibleDir, "ansible.cfg"),
+	)
 
 	var outBuf, errBuf bytes.Buffer
 	// Tee: live to the user's terminal AND captured for the log file / err msg.

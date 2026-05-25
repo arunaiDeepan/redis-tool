@@ -1,0 +1,14 @@
+✓ podman 4.9.3 found
+✓ podman compose available (4.9.3)
+✓ Ansible 2.16.3 found
+Proceeding...
+
+
+PLAY [Seed 1000 deterministic keys] ********************************************
+
+TASK [Push seed shell script] **************************************************
+[0;31mfatal: [redis-node-1]: FAILED! => {"msg": "The task includes an option with an undefined variable. The error was: 'redis_port' is undefined. 'redis_port' is undefined\n\nThe error appears to be in '/mnt/c/Users/aruna/Desktop/gh/redis-tool/ansible/playbooks/data_seed.yml': line 16, column 7, but may\nbe elsewhere in the file depending on the exact syntax problem.\n\nThe offending line appears to be:\n\n  tasks:\n    - name: Push seed shell script\n      ^ here\n"}[0m
+
+PLAY RECAP *********************************************************************
+[0;31mredis-node-1[0m               : ok=0    changed=0    unreachable=0    [0;31mfailed=1   [0m skipped=0    rescued=0    ignored=0   
+

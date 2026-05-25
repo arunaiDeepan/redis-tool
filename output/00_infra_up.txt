@@ -1,0 +1,173 @@
+✓ podman 4.9.3 found
+✓ podman compose available (4.9.3)
+✓ Ansible 2.16.3 found
+Proceeding...
+
+STEP 1/9: FROM ubuntu:22.04
+STEP 2/9: ENV DEBIAN_FRONTEND=noninteractive     LANG=C.UTF-8
+--> Using cache e7ca9355bdb55826147cfbea3cc505d4daba8c7482b5eaf20b014894825ad96b
+--> e7ca9355bdb5
+STEP 3/9: RUN apt-get update && apt-get install -y --no-install-recommends         openssh-server         sudo         ca-certificates         curl         build-essential         pkg-config         python3         python3-apt         iproute2         iputils-ping         procps         tzdata     && rm -rf /var/lib/apt/lists/*
+--> Using cache e5efbd4dcbd6ff514f5df6951af0841389ab459cf2763fd149f5f411dfa53dda
+--> e5efbd4dcbd6
+STEP 4/9: RUN mkdir -p /run/sshd /root/.ssh     && chmod 700 /root/.ssh     && sed -ri 's/^#?PermitRootLogin.*/PermitRootLogin prohibit-password/' /etc/ssh/sshd_config     && sed -ri 's/^#?PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config     && sed -ri 's/^#?PubkeyAuthentication.*/PubkeyAuthentication yes/' /etc/ssh/sshd_config     && sed -ri 's/^#?UseDNS.*/UseDNS no/' /etc/ssh/sshd_config
+--> Using cache 5b6ddb94dcdf19825b7ba30b7fa42471ba8254448acd85fae53dca808d4f66c0
+--> 5b6ddb94dcdf
+STEP 5/9: COPY keys/redis_tool_id_ed25519.pub /root/.ssh/authorized_keys
+--> Using cache d64e1a25a2f6b893369022aeb5f70cd9417b20295f9c2f8be3674d72a7218c84
+--> d64e1a25a2f6
+STEP 6/9: RUN chmod 600 /root/.ssh/authorized_keys
+--> Using cache d33f69ba88f38b7bc73c9b54fb2d43c41992cd5d5075e64cdd1c506c7dbe280b
+--> d33f69ba88f3
+STEP 7/9: RUN mkdir -p /etc/redis /var/lib/redis /var/log/redis /var/run/redis
+--> Using cache 4539d02bf092b7ed5a5c86056fb7e49683da299ff2fbd5c7e56819a4c79d489d
+--> 4539d02bf092
+STEP 8/9: EXPOSE 22 6379 16379
+--> Using cache 2d628ffc21fa9f765db3ecaef3d4ece66ffd9f38e6eca79fb5b80bf535d76ca0
+--> 2d628ffc21fa
+STEP 9/9: CMD ["/usr/sbin/sshd", "-D", "-e"]
+--> Using cache 174cee135d503da53d46cd5c74ef9c06c78c99ae3120bdd9925974c67aa544c7
+COMMIT redis-tool/node:latest
+--> 174cee135d50
+Successfully tagged localhost/redis-tool/node:latest
+174cee135d503da53d46cd5c74ef9c06c78c99ae3120bdd9925974c67aa544c7
+STEP 1/9: FROM ubuntu:22.04
+STEP 2/9: ENV DEBIAN_FRONTEND=noninteractive     LANG=C.UTF-8
+--> Using cache e7ca9355bdb55826147cfbea3cc505d4daba8c7482b5eaf20b014894825ad96b
+--> e7ca9355bdb5
+STEP 3/9: RUN apt-get update && apt-get install -y --no-install-recommends         openssh-server         sudo         ca-certificates         curl         build-essential         pkg-config         python3         python3-apt         iproute2         iputils-ping         procps         tzdata     && rm -rf /var/lib/apt/lists/*
+--> Using cache e5efbd4dcbd6ff514f5df6951af0841389ab459cf2763fd149f5f411dfa53dda
+--> e5efbd4dcbd6
+STEP 4/9: RUN mkdir -p /run/sshd /root/.ssh     && chmod 700 /root/.ssh     && sed -ri 's/^#?PermitRootLogin.*/PermitRootLogin prohibit-password/' /etc/ssh/sshd_config     && sed -ri 's/^#?PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config     && sed -ri 's/^#?PubkeyAuthentication.*/PubkeyAuthentication yes/' /etc/ssh/sshd_config     && sed -ri 's/^#?UseDNS.*/UseDNS no/' /etc/ssh/sshd_config
+--> Using cache 5b6ddb94dcdf19825b7ba30b7fa42471ba8254448acd85fae53dca808d4f66c0
+--> 5b6ddb94dcdf
+STEP 5/9: COPY keys/redis_tool_id_ed25519.pub /root/.ssh/authorized_keys
+--> Using cache d64e1a25a2f6b893369022aeb5f70cd9417b20295f9c2f8be3674d72a7218c84
+--> d64e1a25a2f6
+STEP 6/9: RUN chmod 600 /root/.ssh/authorized_keys
+--> Using cache d33f69ba88f38b7bc73c9b54fb2d43c41992cd5d5075e64cdd1c506c7dbe280b
+--> d33f69ba88f3
+STEP 7/9: RUN mkdir -p /etc/redis /var/lib/redis /var/log/redis /var/run/redis
+--> Using cache 4539d02bf092b7ed5a5c86056fb7e49683da299ff2fbd5c7e56819a4c79d489d
+--> 4539d02bf092
+STEP 8/9: EXPOSE 22 6379 16379
+--> Using cache 2d628ffc21fa9f765db3ecaef3d4ece66ffd9f38e6eca79fb5b80bf535d76ca0
+--> 2d628ffc21fa
+STEP 9/9: CMD ["/usr/sbin/sshd", "-D", "-e"]
+--> Using cache 174cee135d503da53d46cd5c74ef9c06c78c99ae3120bdd9925974c67aa544c7
+COMMIT redis-tool/node:latest
+--> 174cee135d50
+Successfully tagged localhost/redis-tool/node:latest
+174cee135d503da53d46cd5c74ef9c06c78c99ae3120bdd9925974c67aa544c7
+STEP 1/9: FROM ubuntu:22.04
+STEP 2/9: ENV DEBIAN_FRONTEND=noninteractive     LANG=C.UTF-8
+--> Using cache e7ca9355bdb55826147cfbea3cc505d4daba8c7482b5eaf20b014894825ad96b
+--> e7ca9355bdb5
+STEP 3/9: RUN apt-get update && apt-get install -y --no-install-recommends         openssh-server         sudo         ca-certificates         curl         build-essential         pkg-config         python3         python3-apt         iproute2         iputils-ping         procps         tzdata     && rm -rf /var/lib/apt/lists/*
+--> Using cache e5efbd4dcbd6ff514f5df6951af0841389ab459cf2763fd149f5f411dfa53dda
+--> e5efbd4dcbd6
+STEP 4/9: RUN mkdir -p /run/sshd /root/.ssh     && chmod 700 /root/.ssh     && sed -ri 's/^#?PermitRootLogin.*/PermitRootLogin prohibit-password/' /etc/ssh/sshd_config     && sed -ri 's/^#?PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config     && sed -ri 's/^#?PubkeyAuthentication.*/PubkeyAuthentication yes/' /etc/ssh/sshd_config     && sed -ri 's/^#?UseDNS.*/UseDNS no/' /etc/ssh/sshd_config
+--> Using cache 5b6ddb94dcdf19825b7ba30b7fa42471ba8254448acd85fae53dca808d4f66c0
+--> 5b6ddb94dcdf
+STEP 5/9: COPY keys/redis_tool_id_ed25519.pub /root/.ssh/authorized_keys
+--> Using cache d64e1a25a2f6b893369022aeb5f70cd9417b20295f9c2f8be3674d72a7218c84
+--> d64e1a25a2f6
+STEP 6/9: RUN chmod 600 /root/.ssh/authorized_keys
+--> Using cache d33f69ba88f38b7bc73c9b54fb2d43c41992cd5d5075e64cdd1c506c7dbe280b
+--> d33f69ba88f3
+STEP 7/9: RUN mkdir -p /etc/redis /var/lib/redis /var/log/redis /var/run/redis
+--> Using cache 4539d02bf092b7ed5a5c86056fb7e49683da299ff2fbd5c7e56819a4c79d489d
+--> 4539d02bf092
+STEP 8/9: EXPOSE 22 6379 16379
+--> Using cache 2d628ffc21fa9f765db3ecaef3d4ece66ffd9f38e6eca79fb5b80bf535d76ca0
+--> 2d628ffc21fa
+STEP 9/9: CMD ["/usr/sbin/sshd", "-D", "-e"]
+--> Using cache 174cee135d503da53d46cd5c74ef9c06c78c99ae3120bdd9925974c67aa544c7
+COMMIT redis-tool/node:latest
+--> 174cee135d50
+Successfully tagged localhost/redis-tool/node:latest
+174cee135d503da53d46cd5c74ef9c06c78c99ae3120bdd9925974c67aa544c7
+STEP 1/9: FROM ubuntu:22.04
+STEP 2/9: ENV DEBIAN_FRONTEND=noninteractive     LANG=C.UTF-8
+--> Using cache e7ca9355bdb55826147cfbea3cc505d4daba8c7482b5eaf20b014894825ad96b
+--> e7ca9355bdb5
+STEP 3/9: RUN apt-get update && apt-get install -y --no-install-recommends         openssh-server         sudo         ca-certificates         curl         build-essential         pkg-config         python3         python3-apt         iproute2         iputils-ping         procps         tzdata     && rm -rf /var/lib/apt/lists/*
+--> Using cache e5efbd4dcbd6ff514f5df6951af0841389ab459cf2763fd149f5f411dfa53dda
+--> e5efbd4dcbd6
+STEP 4/9: RUN mkdir -p /run/sshd /root/.ssh     && chmod 700 /root/.ssh     && sed -ri 's/^#?PermitRootLogin.*/PermitRootLogin prohibit-password/' /etc/ssh/sshd_config     && sed -ri 's/^#?PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config     && sed -ri 's/^#?PubkeyAuthentication.*/PubkeyAuthentication yes/' /etc/ssh/sshd_config     && sed -ri 's/^#?UseDNS.*/UseDNS no/' /etc/ssh/sshd_config
+--> Using cache 5b6ddb94dcdf19825b7ba30b7fa42471ba8254448acd85fae53dca808d4f66c0
+--> 5b6ddb94dcdf
+STEP 5/9: COPY keys/redis_tool_id_ed25519.pub /root/.ssh/authorized_keys
+--> Using cache d64e1a25a2f6b893369022aeb5f70cd9417b20295f9c2f8be3674d72a7218c84
+--> d64e1a25a2f6
+STEP 6/9: RUN chmod 600 /root/.ssh/authorized_keys
+--> Using cache d33f69ba88f38b7bc73c9b54fb2d43c41992cd5d5075e64cdd1c506c7dbe280b
+--> d33f69ba88f3
+STEP 7/9: RUN mkdir -p /etc/redis /var/lib/redis /var/log/redis /var/run/redis
+--> Using cache 4539d02bf092b7ed5a5c86056fb7e49683da299ff2fbd5c7e56819a4c79d489d
+--> 4539d02bf092
+STEP 8/9: EXPOSE 22 6379 16379
+--> Using cache 2d628ffc21fa9f765db3ecaef3d4ece66ffd9f38e6eca79fb5b80bf535d76ca0
+--> 2d628ffc21fa
+STEP 9/9: CMD ["/usr/sbin/sshd", "-D", "-e"]
+--> Using cache 174cee135d503da53d46cd5c74ef9c06c78c99ae3120bdd9925974c67aa544c7
+COMMIT redis-tool/node:latest
+--> 174cee135d50
+Successfully tagged localhost/redis-tool/node:latest
+174cee135d503da53d46cd5c74ef9c06c78c99ae3120bdd9925974c67aa544c7
+STEP 1/9: FROM ubuntu:22.04
+STEP 2/9: ENV DEBIAN_FRONTEND=noninteractive     LANG=C.UTF-8
+--> Using cache e7ca9355bdb55826147cfbea3cc505d4daba8c7482b5eaf20b014894825ad96b
+--> e7ca9355bdb5
+STEP 3/9: RUN apt-get update && apt-get install -y --no-install-recommends         openssh-server         sudo         ca-certificates         curl         build-essential         pkg-config         python3         python3-apt         iproute2         iputils-ping         procps         tzdata     && rm -rf /var/lib/apt/lists/*
+--> Using cache e5efbd4dcbd6ff514f5df6951af0841389ab459cf2763fd149f5f411dfa53dda
+--> e5efbd4dcbd6
+STEP 4/9: RUN mkdir -p /run/sshd /root/.ssh     && chmod 700 /root/.ssh     && sed -ri 's/^#?PermitRootLogin.*/PermitRootLogin prohibit-password/' /etc/ssh/sshd_config     && sed -ri 's/^#?PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config     && sed -ri 's/^#?PubkeyAuthentication.*/PubkeyAuthentication yes/' /etc/ssh/sshd_config     && sed -ri 's/^#?UseDNS.*/UseDNS no/' /etc/ssh/sshd_config
+--> Using cache 5b6ddb94dcdf19825b7ba30b7fa42471ba8254448acd85fae53dca808d4f66c0
+--> 5b6ddb94dcdf
+STEP 5/9: COPY keys/redis_tool_id_ed25519.pub /root/.ssh/authorized_keys
+--> Using cache d64e1a25a2f6b893369022aeb5f70cd9417b20295f9c2f8be3674d72a7218c84
+--> d64e1a25a2f6
+STEP 6/9: RUN chmod 600 /root/.ssh/authorized_keys
+--> Using cache d33f69ba88f38b7bc73c9b54fb2d43c41992cd5d5075e64cdd1c506c7dbe280b
+--> d33f69ba88f3
+STEP 7/9: RUN mkdir -p /etc/redis /var/lib/redis /var/log/redis /var/run/redis
+--> Using cache 4539d02bf092b7ed5a5c86056fb7e49683da299ff2fbd5c7e56819a4c79d489d
+--> 4539d02bf092
+STEP 8/9: EXPOSE 22 6379 16379
+--> Using cache 2d628ffc21fa9f765db3ecaef3d4ece66ffd9f38e6eca79fb5b80bf535d76ca0
+--> 2d628ffc21fa
+STEP 9/9: CMD ["/usr/sbin/sshd", "-D", "-e"]
+--> Using cache 174cee135d503da53d46cd5c74ef9c06c78c99ae3120bdd9925974c67aa544c7
+COMMIT redis-tool/node:latest
+--> 174cee135d50
+Successfully tagged localhost/redis-tool/node:latest
+174cee135d503da53d46cd5c74ef9c06c78c99ae3120bdd9925974c67aa544c7
+STEP 1/9: FROM ubuntu:22.04
+STEP 2/9: ENV DEBIAN_FRONTEND=noninteractive     LANG=C.UTF-8
+--> Using cache e7ca9355bdb55826147cfbea3cc505d4daba8c7482b5eaf20b014894825ad96b
+--> e7ca9355bdb5
+STEP 3/9: RUN apt-get update && apt-get install -y --no-install-recommends         openssh-server         sudo         ca-certificates         curl         build-essential         pkg-config         python3         python3-apt         iproute2         iputils-ping         procps         tzdata     && rm -rf /var/lib/apt/lists/*
+--> Using cache e5efbd4dcbd6ff514f5df6951af0841389ab459cf2763fd149f5f411dfa53dda
+--> e5efbd4dcbd6
+STEP 4/9: RUN mkdir -p /run/sshd /root/.ssh     && chmod 700 /root/.ssh     && sed -ri 's/^#?PermitRootLogin.*/PermitRootLogin prohibit-password/' /etc/ssh/sshd_config     && sed -ri 's/^#?PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config     && sed -ri 's/^#?PubkeyAuthentication.*/PubkeyAuthentication yes/' /etc/ssh/sshd_config     && sed -ri 's/^#?UseDNS.*/UseDNS no/' /etc/ssh/sshd_config
+--> Using cache 5b6ddb94dcdf19825b7ba30b7fa42471ba8254448acd85fae53dca808d4f66c0
+--> 5b6ddb94dcdf
+STEP 5/9: COPY keys/redis_tool_id_ed25519.pub /root/.ssh/authorized_keys
+--> Using cache d64e1a25a2f6b893369022aeb5f70cd9417b20295f9c2f8be3674d72a7218c84
+--> d64e1a25a2f6
+STEP 6/9: RUN chmod 600 /root/.ssh/authorized_keys
+--> Using cache d33f69ba88f38b7bc73c9b54fb2d43c41992cd5d5075e64cdd1c506c7dbe280b
+--> d33f69ba88f3
+STEP 7/9: RUN mkdir -p /etc/redis /var/lib/redis /var/log/redis /var/run/redis
+--> Using cache 4539d02bf092b7ed5a5c86056fb7e49683da299ff2fbd5c7e56819a4c79d489d
+--> 4539d02bf092
+STEP 8/9: EXPOSE 22 6379 16379
+--> Using cache 2d628ffc21fa9f765db3ecaef3d4ece66ffd9f38e6eca79fb5b80bf535d76ca0
+--> 2d628ffc21fa
+STEP 9/9: CMD ["/usr/sbin/sshd", "-D", "-e"]
+--> Using cache 174cee135d503da53d46cd5c74ef9c06c78c99ae3120bdd9925974c67aa544c7
+COMMIT redis-tool/node:latest
+--> 174cee135d50
+Successfully tagged localhost/redis-tool/node:latest
+174cee135d503da53d46cd5c74ef9c06c78c99ae3120bdd9925974c67aa544c7
