@@ -39,12 +39,15 @@
           ip: "{{ node_ip }}"
           port: "{{ redis_port }}"
           reachable: "{{ info_server.rc == 0 }}"
-          version: "{{ (info_server.stdout | regex_search('redis_version:([0-9.]+)', '\\1') | first) | default('') }}"
+          # regex_search returns None on no-match; `| first` chokes on None.
+          # `| default([], true)` swaps None for [] so `| first` always sees a
+          # list. Needed because rolling upgrades briefly take a node offline.
+          version: "{{ ((info_server.stdout | regex_search('redis_version:([0-9.]+)', '\\1')) | default([], true) | first) | default('') }}"
           # role/master/slots come from cluster-aware sources below; INFO replication
           # tells us role and master link state.
           info_replication_raw: "{{ info_replication.stdout }}"
-          memory_human: "{{ (info_memory.stdout | regex_search('used_memory_human:([^\\r\\n]+)', '\\1') | first) | default('') | trim }}"
-          dbsize: "{{ (dbsize.stdout | int) if dbsize.rc == 0 else -1 }}"
+          memory_human: "{{ ((info_memory.stdout | regex_search('used_memory_human:([^\\r\\n]+)', '\\1')) | default([], true) | first) | default('') | trim }}"
+          dbsize: "{{ dbsize.stdout | int(-1) }}"
 
 - name: Cluster-wide state (delegated to seed)
   hosts: seed

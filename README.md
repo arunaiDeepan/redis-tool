@@ -39,7 +39,7 @@ redis-tool
 # 4. Topology
 ./redis-tool status
 
-# 5. Rolling upgrade to 7.2.6 (the heart of the assignment)
+# 5. Rolling upgrade to 7.2.6
 ./redis-tool upgrade --target-version 7.2.6 --strategy rolling
 
 # 6. Full health check
@@ -190,8 +190,7 @@ REPLICAS
 
 ### `upgrade --target-version X.Y.Z --strategy rolling`
 
-**This is the part that wins or loses the assignment.** The strategy below
-keeps `cluster_state:ok` throughout the entire upgrade and never disconnects
+The strategy below keeps `cluster_state:ok` throughout the entire upgrade and never disconnects
 a client from a master - only ever from a node that is currently a replica.
 
 #### Why **replicas first, then masters via failover**?
@@ -226,8 +225,7 @@ identity.
 Go's orchestrator (`internal/upgrade/state.go`) gates every step on a
 refreshed `CLUSTER INFO` from the seed node. If `cluster_state:ok` doesn't
 come back within 90s, the upgrade stops with a clear error naming the node
-and the step. We do **not** auto-rollback - per the assignment, we leave the
-cluster as-is so the operator can inspect.
+and the step.
 
 #### Idempotency
 
@@ -313,8 +311,7 @@ These are deliberate; I'd revisit each one for a production tool.
   `PermitRootLogin prohibit-password` (keys only - passwords disabled).
 
 - **Source build vs apt packages.** Apt doesn't carry arbitrary `X.Y.Z`
-  point releases, and the assignment is explicit about *exact* versions.
-  Building from source takes 1–2 min/node but runs in parallel across all
+  point releases.Building from source takes 1–2 min/node but runs in parallel across all
   six. A faster alternative is to build once on the control node and
   distribute the binary - a clean optimization but adds a layer of caching
   logic that isn't necessary to demonstrate the rest of the design.

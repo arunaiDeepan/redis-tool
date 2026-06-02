@@ -70,9 +70,14 @@
   register: post_install_version
   changed_when: false
 
+- name: Parse post-install Redis version
+  when: redis_needs_build
+  ansible.builtin.set_fact:
+    post_install_redis_version: "{{ post_install_version.stdout | regex_search('v=([0-9]+\\.[0-9]+\\.[0-9]+)', '\\1') | first }}"
+
 - name: Fail loudly if installed version doesn't match requested
   when: redis_needs_build
   ansible.builtin.assert:
     that:
-      - (post_install_version.stdout | regex_search('v=([0-9]+\.[0-9]+\.[0-9]+)', '\1') | first) == redis_version
+      - post_install_redis_version == redis_version
     fail_msg: "Installed binary is not {{ redis_version }}; got: {{ post_install_version.stdout }}"

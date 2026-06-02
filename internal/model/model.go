@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -29,6 +30,41 @@ type Node struct {
 	InfoReplicationRaw string `json:"info_replication_raw"`
 	MemoryHuman        string `json:"memory_human"`
 	DBSize             int    `json:"dbsize"`
+}
+
+// UnmarshalJSON tolerates Ansible serializing dbsize as either a JSON number
+// or a quoted string. Ansible's native-type preservation in set_fact is
+// inconsistent for filtered values, so we accept both forms.
+func (n *Node) UnmarshalJSON(data []byte) error {
+	type alias Node
+	aux := struct {
+		DBSize json.RawMessage `json:"dbsize"`
+		*alias
+	}{alias: (*alias)(n)}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	if len(aux.DBSize) == 0 {
+		return nil
+	}
+	if err := json.Unmarshal(aux.DBSize, &n.DBSize); err == nil {
+		return nil
+	}
+	var s string
+	if err := json.Unmarshal(aux.DBSize, &s); err != nil {
+		return fmt.Errorf("dbsize: not a number or string: %s", aux.DBSize)
+	}
+	s = strings.TrimSpace(s)
+	if s == "" {
+		n.DBSize = -1
+		return nil
+	}
+	v, err := strconv.Atoi(s)
+	if err != nil {
+		return fmt.Errorf("dbsize: cannot parse %q as int", s)
+	}
+	n.DBSize = v
+	return nil
 }
 
 // Role + slot data parsed from cluster_nodes_raw.

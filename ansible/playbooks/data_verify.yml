@@ -14,12 +14,18 @@
       ansible.builtin.copy:
         dest: "{{ verify_script_dest }}"
         mode: "0755"
+        # Jinja-substituted values are hoisted to bash vars at the top so the
+        # body can live inside {% raw %}…{% endraw %}. Required because bash
+        # ${#VAR} (string length) collides with Jinja's {# … #} comment syntax.
         content: |
           #!/usr/bin/env bash
           set -euo pipefail
           COUNT="${1:-1000}"
           HOST="127.0.0.1"
           PORT="{{ redis_port }}"
+          REDIS_CLI="{{ redis_install_prefix }}/bin/redis-cli"
+          RESULT_PATH="{{ verify_result_path }}"
+          {% raw %}
           OK=0
           MISSING=0
           MISMATCH=0
@@ -27,7 +33,7 @@
           for i in $(seq 1 "$COUNT"); do
             key=$(printf "key:%04d" "$i")
             expected=$(printf "%s" "$key" | sha256sum | awk '{print $1}')
-            got=$({{ redis_install_prefix }}/bin/redis-cli -c -h "$HOST" -p "$PORT" GET "$key" || true)
+            got=$("$REDIS_CLI" -c -h "$HOST" -p "$PORT" GET "$key" || true)
             if [[ -z "$got" ]]; then
               MISSING=$((MISSING+1))
               [[ ${#MISSES} -lt 200 ]] && MISSES="$MISSES $key"
@@ -39,7 +45,8 @@
             fi
           done
           printf '{"verified":%d,"missing":%d,"mismatched":%d,"total":%d,"sample_failures":"%s"}\n' \
-            "$OK" "$MISSING" "$MISMATCH" "$COUNT" "$(echo "$MISSES" | sed 's/"/\\"/g')" > "{{ verify_result_path }}"
+            "$OK" "$MISSING" "$MISMATCH" "$COUNT" "$(echo "$MISSES" | sed 's/"/\\"/g')" > "$RESULT_PATH"
+          {% endraw %}
 
     - name: Execute verify
       ansible.builtin.command: "{{ verify_script_dest }} {{ keys_count }}"
